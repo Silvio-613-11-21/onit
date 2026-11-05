@@ -5,8 +5,8 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { sql } from 'drizzle-orm';
 
 
-dotenv.config({path: '../../env.testing'})
-const db_url =  process.env.DATABASE_URL
+dotenv.config()
+const db_url =  process.env.TEST_DATABASE_URL
 
 export async function testDB(){
     if(!db_url){
