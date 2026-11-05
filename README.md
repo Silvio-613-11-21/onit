@@ -92,10 +92,5 @@ docker compose down -v
 
 Тесты:
 
-```powershell
-docker compose up -d db
-docker compose exec db psql -U postgres -c "CREATE DATABASE onit_test;"
-$env:DATABASE_URL = "postgresql://postgres:admin@localhost:5433/onit_test"
-npm test
-```
+
 
