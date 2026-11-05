@@ -61,4 +61,41 @@
   npm run test:integration
 ```
 
+## Доакер 
+
+## Запуск через Docker
+
+Требуется Docker Desktop.
+
+Сборка и запуск (приложение + PostgreSQL, миграции применяются автоматически):
+
+```powershell
+docker compose up --build
+```
+
+Swagger UI: http://localhost:8080/api-docs
+
+Остановка (данные БД сохраняются в volume):
+
+```powershell
+docker compose down
+```
+
+Полный сброс вместе с данными БД:
+
+```powershell
+docker compose down -v
+```
+
+Проверка: создать запись через API → `docker compose down` →
+`docker compose up` → запись по-прежнему доступна через `GET /block/getall`.
+
+Тесты:
+
+```powershell
+docker compose up -d db
+docker compose exec db psql -U postgres -c "CREATE DATABASE onit_test;"
+$env:DATABASE_URL = "postgresql://postgres:admin@localhost:5433/onit_test"
+npm test
+```
 

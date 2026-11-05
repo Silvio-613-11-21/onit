@@ -2,7 +2,6 @@ services:
   backend:
     build: .
     environment:
-      # Внутри сети БД доступна по имени сервиса "db", а не localhost
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-admin}@db:5432/${POSTGRES_DB:-postgres}
       PORT: "8080"
       HOST: "0.0.0.0"
