@@ -1,0 +1,1726 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "My API",
+    "version": "1.0.0",
+    "description": "API для работы с ежедневником"
+  },
+  "paths": {
+    "/block/create": {
+      "post": {
+        "summary": "Создать блок",
+        "description": "Создаёт новую запись блока в базе данных.",
+        "tags": ["Block"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateBlock" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Блок успешно создан",
+            "content": {
+              "text/plain": {
+                "schema": { "type": "string", "example": "OK" }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректные данные запроса",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/block/getall": {
+      "get": {
+        "summary": "Получить все блоки",
+        "description": "Возвращает список всех блоков из базы данных.",
+        "tags": ["Block"],
+        "responses": {
+          "200": {
+            "description": "Список блоков успешно получен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Block" }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/block/{id}": {
+      "get": {
+        "summary": "Получить блок по ID",
+        "description": "Возвращает один блок по его уникальному идентификатору.",
+        "tags": ["Block"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Числовой идентификатор блока",
+            "schema": { "type": "integer", "example": 1 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Блок успешно найден",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Block" }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный ID (не число)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            "description": "Блок с указанным ID не найден",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Удалить блок по ID",
+        "description": "Удаляет блок из базы данных по его уникальному идентификатору.",
+        "tags": ["Block"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Числовой идентификатор блока",
+            "schema": { "type": "integer", "example": 1 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Блок успешно удалён",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mess": {
+                      "type": "string",
+                      "example": "блок 1 был удалён"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный ID (не число)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/block/changetitle/{id}": {
+      "patch": {
+        "summary": "Изменить заголовок блока",
+        "description": "Обновляет заголовок существующего блока по его идентификатору.",
+        "tags": ["Block"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Числовой идентификатор блока",
+            "schema": { "type": "integer", "example": 1 }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Новый заголовок блока",
+                    "example": "Обновлённый заголовок"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Заголовок блока успешно изменён",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mess": {
+                      "type": "string",
+                      "example": "блок 1 был изменён"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный ID или блок не найден",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/block/createByCurrentDate": {
+      "post": {
+        "summary": "Создать блок с текущей датой",
+        "description": "Создаёт новую запись блока, используя текущую дату сервера и переданный заголовок.",
+        "tags": ["Block"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Заголовок блока",
+                    "example": "Блок на сегодня"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Блок успешно создан (тело ответа пустое)",
+            "content": {
+              "text/plain": {
+                "schema": { "type": "string", "example": "" }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/note/create": {
+      "post": {
+        "summary": "Создать заметку",
+        "description": "Создаёт новую запись заметки в базе данных.",
+        "tags": ["Note"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateNote" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Заметка успешно создана",
+            "content": {
+              "text/plain": {
+                "schema": { "type": "string", "example": "OK" }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректные данные запроса",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/note/getall": {
+      "get": {
+        "summary": "Получить все заметки",
+        "description": "Возвращает список всех заметок из базы данных.",
+        "tags": ["Note"],
+        "responses": {
+          "200": {
+            "description": "Список заметок успешно получен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Note" }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/note/getbyblockid/{blockId}": {
+      "get": {
+        "summary": "Получить заметки блока",
+        "description": "Возвращает список всех заметок, относящихся к блоку.",
+        "tags": ["Note"],
+        "parameters": [
+          {
+            "name": "blockId",
+            "in": "path",
+            "required": true,
+            "description": "Числовой идентификатор блока",
+            "schema": { "type": "integer", "example": 1 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Список заметок блока успешно получен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Note" }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный ID (не число)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/note/{id}": {
+      "get": {
+        "summary": "Получить заметку по ID",
+        "description": "Возвращает одну заметку по её уникальному идентификатору.",
+        "tags": ["Note"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Числовой идентификатор заметки",
+            "schema": { "type": "integer", "example": 1 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Заметка успешно найдена",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Note" }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный ID (не число)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            "description": "Заметка с указанным ID не найдена",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Удалить заметку по ID",
+        "description": "Удаляет заметку из базы данных по её уникальному идентификатору.",
+        "tags": ["Note"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Числовой идентификатор заметки",
+            "schema": { "type": "integer", "example": 1 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Заметка успешно удалена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mess": {
+                      "type": "string",
+                      "example": "заметка 1 была удалена"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный ID (не число)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/note/changetitle/{id}": {
+      "patch": {
+        "summary": "Изменить заголовок заметки",
+        "description": "Обновляет заголовок существующей заметки по её идентификатору.",
+        "tags": ["Note"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Числовой идентификатор заметки",
+            "schema": { "type": "integer", "example": 1 }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Новый заголовок заметки",
+                    "example": "Обновлённый заголовок"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Заголовок заметки успешно изменён",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mess": {
+                      "type": "string",
+                      "example": "заметка 1 была изменена"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный ID или заметка не найдена",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/note/changedescription/{id}": {
+      "patch": {
+        "summary": "Изменить описание заметки",
+        "description": "Обновляет описание существующей заметки по её идентификатору.",
+        "tags": ["Note"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Числовой идентификатор заметки",
+            "schema": { "type": "integer", "example": 1 }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["description"],
+                "properties": {
+                  "description": {
+                    "type": "string",
+                    "description": "Новое описание заметки",
+                    "example": "Обновлённое описание"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Описание заметки успешно изменено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mess": {
+                      "type": "string",
+                      "example": "заметка 1 была изменена"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный ID или заметка не найдена",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/task/create": {
+      "post": {
+        "summary": "Создать задачу",
+        "description": "Создаёт новую запись задачи в базе данных.",
+        "tags": ["Task"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateTask" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Задача успешно создана",
+            "content": {
+              "text/plain": {
+                "schema": { "type": "string", "example": "OK" }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректные данные запроса",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/task/getall": {
+      "get": {
+        "summary": "Получить все задачи",
+        "description": "Возвращает список всех задач из базы данных.",
+        "tags": ["Task"],
+        "responses": {
+          "200": {
+            "description": "Список задач успешно получен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Task" }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/task/getbyblockid/{blockId}": {
+      "get": {
+        "summary": "Получить задачи блока",
+        "description": "Возвращает список всех задач, относящихся к блоку.",
+        "tags": ["Task"],
+        "parameters": [
+          {
+            "name": "blockId",
+            "in": "path",
+            "required": true,
+            "description": "Числовой идентификатор блока",
+            "schema": { "type": "integer", "example": 1 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Список задач блока успешно получен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Task" }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный ID (не число)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/task/{id}": {
+      "get": {
+        "summary": "Получить задачу по ID",
+        "description": "Возвращает одну задачу по её уникальному идентификатору.",
+        "tags": ["Task"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Числовой идентификатор задачи",
+            "schema": { "type": "integer", "example": 1 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Задача успешно найдена",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Task" }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный ID (не число)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            "description": "Задача с указанным ID не найдена",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Удалить задачу по ID",
+        "description": "Удаляет задачу из базы данных по её уникальному идентификатору.",
+        "tags": ["Task"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Числовой идентификатор задачи",
+            "schema": { "type": "integer", "example": 1 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Задача успешно удалена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mess": {
+                      "type": "string",
+                      "example": "задача 1 была удалена"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный ID (не число)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/task/changetitle/{id}": {
+      "patch": {
+        "summary": "Изменить заголовок задачи",
+        "description": "Обновляет заголовок существующей задачи по её идентификатору.",
+        "tags": ["Task"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Числовой идентификатор задачи",
+            "schema": { "type": "integer", "example": 1 }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Новый заголовок задачи",
+                    "example": "Обновлённый заголовок"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Заголовок задачи успешно изменён",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mess": {
+                      "type": "string",
+                      "example": "задача 1 была изменена"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный ID или задача не найдена",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/task/changedescription/{id}": {
+      "patch": {
+        "summary": "Изменить описание задачи",
+        "description": "Обновляет описание существующей задачи по её идентификатору.",
+        "tags": ["Task"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Числовой идентификатор задачи",
+            "schema": { "type": "integer", "example": 1 }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["description"],
+                "properties": {
+                  "description": {
+                    "type": "string",
+                    "description": "Новое описание задачи",
+                    "example": "Обновлённое описание"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Описание задачи успешно изменено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mess": {
+                      "type": "string",
+                      "example": "задача 1 была изменена"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный ID или задача не найдена",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/task/changestate/{id}": {
+      "patch": {
+        "summary": "Изменить состояние задачи",
+        "description": "Обновляет состояние выполнения существующей задачи по её идентификатору.",
+        "tags": ["Task"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Числовой идентификатор задачи",
+            "schema": { "type": "integer", "example": 1 }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["state"],
+                "properties": {
+                  "state": {
+                    "type": "boolean",
+                    "description": "Новое состояние выполнения задачи",
+                    "example": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Состояние задачи успешно изменено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mess": {
+                      "type": "string",
+                      "example": "задача 1 была изменена"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный ID или задача не найдена",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subtask/create": {
+      "post": {
+        "summary": "Создать подзадачу",
+        "description": "Создаёт новую запись подзадачи в базе данных.",
+        "tags": ["Subtask"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateSubtask" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Подзадача успешно создана",
+            "content": {
+              "text/plain": {
+                "schema": { "type": "string", "example": "OK" }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректные данные запроса",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subtask/getall": {
+      "get": {
+        "summary": "Получить все подзадачи",
+        "description": "Возвращает список всех подзадач из базы данных.",
+        "tags": ["Subtask"],
+        "responses": {
+          "200": {
+            "description": "Список подзадач успешно получен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Subtask" }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subtask/getbytaskid/{taskId}": {
+      "get": {
+        "summary": "Получить подзадачи задачи",
+        "description": "Возвращает список всех подзадач, относящихся к задаче.",
+        "tags": ["Subtask"],
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "description": "Числовой идентификатор задачи",
+            "schema": { "type": "integer", "example": 1 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Список подзадач задачи успешно получен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Subtask" }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный ID (не число)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subtask/{id}": {
+      "get": {
+        "summary": "Получить подзадачу по ID",
+        "description": "Возвращает одну подзадачу по её уникальному идентификатору.",
+        "tags": ["Subtask"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Числовой идентификатор подзадачи",
+            "schema": { "type": "integer", "example": 1 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Подзадача успешно найдена",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Subtask" }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный ID (не число)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            "description": "Подзадача с указанным ID не найдена",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Удалить подзадачу по ID",
+        "description": "Удаляет подзадачу из базы данных по её уникальному идентификатору.",
+        "tags": ["Subtask"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Числовой идентификатор подзадачи",
+            "schema": { "type": "integer", "example": 1 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Подзадача успешно удалена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mess": {
+                      "type": "string",
+                      "example": "подзадача 1 была удалена"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный ID (не число)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subtask/changetitle/{id}": {
+      "patch": {
+        "summary": "Изменить заголовок подзадачи",
+        "description": "Обновляет заголовок существующей подзадачи по её идентификатору.",
+        "tags": ["Subtask"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Числовой идентификатор подзадачи",
+            "schema": { "type": "integer", "example": 1 }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Новый заголовок подзадачи",
+                    "example": "Обновлённый заголовок"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Заголовок подзадачи успешно изменён",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mess": {
+                      "type": "string",
+                      "example": "подзадача 1 была изменена"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный ID или подзадача не найдена",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subtask/changedescription/{id}": {
+      "patch": {
+        "summary": "Изменить описание подзадачи",
+        "description": "Обновляет описание существующей подзадачи по её идентификатору.",
+        "tags": ["Subtask"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Числовой идентификатор подзадачи",
+            "schema": { "type": "integer", "example": 1 }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["description"],
+                "properties": {
+                  "description": {
+                    "type": "string",
+                    "description": "Новое описание подзадачи",
+                    "example": "Обновлённое описание"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Описание подзадачи успешно изменено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mess": {
+                      "type": "string",
+                      "example": "подзадача 1 была изменена"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный ID или подзадача не найдена",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subtask/changestate/{id}": {
+      "patch": {
+        "summary": "Изменить состояние подзадачи",
+        "description": "Обновляет состояние выполнения существующей подзадачи по её идентификатору.",
+        "tags": ["Subtask"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Числовой идентификатор подзадачи",
+            "schema": { "type": "integer", "example": 1 }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["state"],
+                "properties": {
+                  "state": {
+                    "type": "boolean",
+                    "description": "Новое состояние выполнения подзадачи",
+                    "example": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Состояние подзадачи успешно изменено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mess": {
+                      "type": "string",
+                      "example": "подзадача 1 была изменена"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный ID или подзадача не найдена",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/report/{blockId}": {
+      "get": {
+        "summary": "Получить отчёт по блоку",
+        "description": "Формирует отчёт по блоку с его заметками, задачами и подзадачами и отправляет файл report.md.",
+        "tags": ["Report"],
+        "parameters": [
+          {
+            "name": "blockId",
+            "in": "path",
+            "required": true,
+            "description": "Числовой идентификатор блока",
+            "schema": { "type": "integer", "example": 1 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Файл report.md успешно сформирован",
+            "content": {
+              "text/markdown": {
+                "schema": { "type": "string" }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный ID или блок не найден",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка на стороне сервера / ошибка БД",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreateBlock": {
+        "type": "object",
+        "required": ["date", "title"],
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Дата блока",
+            "example": "2026-10-26"
+          },
+          "title": {
+            "type": "string",
+            "description": "Заголовок блока",
+            "example": "Мой первый блок"
+          }
+        }
+      },
+      "Block": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Уникальный идентификатор блока",
+            "example": 1
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Дата блока",
+            "example": "2026-10-26T12:00:00.000Z"
+          },
+          "title": {
+            "type": "string",
+            "description": "Заголовок блока",
+            "example": "Мой первый блок"
+          }
+        }
+      },
+      "CreateNote": {
+        "type": "object",
+        "required": ["blockId", "title"],
+        "properties": {
+          "blockId": {
+            "type": "integer",
+            "description": "Идентификатор блока",
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "description": "Заголовок заметки",
+            "example": "Моя первая заметка"
+          },
+          "description": {
+            "type": "string",
+            "description": "Описание заметки",
+            "example": "Текст заметки"
+          }
+        }
+      },
+      "Note": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Уникальный идентификатор заметки",
+            "example": 1
+          },
+          "blockId": {
+            "type": "integer",
+            "description": "Идентификатор блока, к которому относится заметка",
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "description": "Заголовок заметки",
+            "example": "Моя первая заметка"
+          },
+          "description": {
+            "type": "string",
+            "description": "Описание заметки",
+            "example": "Текст заметки"
+          }
+        }
+      },
+      "CreateTask": {
+        "type": "object",
+        "required": ["blockId", "title"],
+        "properties": {
+          "blockId": {
+            "type": "integer",
+            "description": "Идентификатор блока",
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "description": "Заголовок задачи",
+            "example": "Моя первая задача"
+          },
+          "description": {
+            "type": "string",
+            "description": "Описание задачи",
+            "example": "Описание задачи"
+          },
+          "state": {
+            "type": "boolean",
+            "description": "Состояние выполнения задачи",
+            "example": false
+          },
+          "noteId": {
+            "type": "integer",
+            "description": "Идентификатор связанной заметки",
+            "example": 1
+          }
+        }
+      },
+      "Task": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Уникальный идентификатор задачи",
+            "example": 1
+          },
+          "blockId": {
+            "type": "integer",
+            "description": "Идентификатор блока, к которому относится задача",
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "description": "Заголовок задачи",
+            "example": "Моя первая задача"
+          },
+          "description": {
+            "type": "string",
+            "description": "Описание задачи",
+            "example": "Описание задачи"
+          },
+          "state": {
+            "type": "boolean",
+            "description": "Состояние выполнения задачи",
+            "example": false
+          },
+          "noteId": {
+            "type": "integer",
+            "description": "Идентификатор связанной заметки",
+            "example": 1
+          }
+        }
+      },
+      "CreateSubtask": {
+        "type": "object",
+        "required": ["taskId", "title"],
+        "properties": {
+          "taskId": {
+            "type": "integer",
+            "description": "Идентификатор задачи",
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "description": "Заголовок подзадачи",
+            "example": "Моя первая подзадача"
+          },
+          "description": {
+            "type": "string",
+            "description": "Описание подзадачи",
+            "example": "Описание подзадачи"
+          },
+          "state": {
+            "type": "boolean",
+            "description": "Состояние выполнения подзадачи",
+            "example": false
+          }
+        }
+      },
+      "Subtask": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Уникальный идентификатор подзадачи",
+            "example": 1
+          },
+          "taskId": {
+            "type": "integer",
+            "description": "Идентификатор задачи, к которой относится подзадача",
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "description": "Заголовок подзадачи",
+            "example": "Моя первая подзадача"
+          },
+          "description": {
+            "type": "string",
+            "description": "Описание подзадачи",
+            "example": "Описание подзадачи"
+          },
+          "state": {
+            "type": "boolean",
+            "description": "Состояние выполнения подзадачи",
+            "example": false
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string", "example": "Ошибка подключения к БД" }
+        }
+      }
+    }
+  }
+}
