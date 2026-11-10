@@ -61,7 +61,9 @@ commit_hint() {
 EOF
 }
 
-require_clean
+if [ "$SCENARIO" != "restore" ]; then
+    require_clean
+fi
 
 case "$SCENARIO" in
 s4)

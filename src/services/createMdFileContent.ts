@@ -48,7 +48,7 @@ function addTasks(tasks: Task[], subtasks: Subtask[][]) {
         
 
         if (task.state) {
-            c += '- [x] '
+            c += '- [X] '
         }
         else {
             c += '- [ ] '
@@ -78,7 +78,7 @@ function addTasks(tasks: Task[], subtasks: Subtask[][]) {
                     c += '\t'
 
                     if (subtask_.state) {
-                        c += '- [x] '
+                        c += '- [X] '
                     }
                     else {
                         c += '- [ ] '
