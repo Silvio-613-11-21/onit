@@ -1,2 +1,4 @@
 node_modules
 reports/*.xml
+smoke-report.txt
+stand-run/

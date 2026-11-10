@@ -56,7 +56,7 @@ echo " ОБРАЗ: $APP_IMAGE"
 echo "═══════════════════════════════════════════════════════════"
 
 echo "→ Проверяю SSH-доступ"
-remote "echo '   ssh ok: '\$(hostname) && docker version --format '   docker {{.Server.Version}}' && docker compose version --prefix '   '"
+remote "echo '   ssh ok: '\$(hostname) && docker version --format '   docker {{.Server.Version}}' && docker compose version"
 
 echo "→ Готовлю файлы на стенде"
 STAGING="$(mktemp -d)"

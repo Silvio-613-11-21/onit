@@ -61,6 +61,18 @@
   npm run test:integration
 ```
 
+Сквозной CRUD по развёрнутому приложению (ЛР4). Требует запущенного стенда:
+```
+  E2E_BASE_URL=http://localhost:8090 npm run test:e2e
+```
+
+Проверка типов:
+```
+  npm run typecheck
+```
+
+Варианты `*:ci` дополнительно пишут JUnit-отчёт в `reports/`.
+
 ## Доакер 
 
 ## Запуск через Docker
@@ -110,3 +122,48 @@ docker compose -f compose.tests.yaml down
 ```
 
 
+
+## CI/CD (ЛР3 и ЛР4)
+
+Пайплайн описан в [`.gitlab-ci.yml`](.gitlab-ci.yml):
+
+| Этап | Джобы | Что делают |
+|---|---|---|
+| `check` | `typecheck`, `config:check` | `tsc --noEmit`, валидность всех compose-файлов |
+| `test` | `test:unit`, `test:integration` | тесты ЛР1 + проверки API и БД; интеграционные — с отдельной `postgres:17-alpine` |
+| `build` | `build:image` | сборка и публикация в GitLab Container Registry (только основная ветка) |
+| `deploy` | `deploy:stand:ssh` / `deploy:stand:socket` | развёртывание опубликованного образа на стенде через Docker Compose |
+| `smoke` | `smoke` | `/health`, `/health/ready`, CRUD и сквозной e2e-сценарий по опубликованному образу |
+| `cleanup` | `cleanup` | удаление временного окружения и тестовых данных; данные стенда сохраняются |
+
+Особенности:
+
+- Пайплайн создаётся и на push, и на merge request, но **без дублей** (`workflow:rules`).
+- Публикация и deploy — **только из основной ветки** (`rules` у соответствующих джоб).
+- Ошибка любой обязательной проверки блокирует публикацию и deploy;
+  `allow_failure: true` не используется нигде.
+- JUnit-отчёты и диагностика сохраняются в artifacts с `when: always`,
+  то есть и при упавших тестах.
+- Секреты хранятся только в Settings → CI/CD → Variables.
+
+Документация:
+
+- [`CI_GUIDE.md`](CI_GUIDE.md) — пошаговая настройка GitLab, Runner, SSH-ключей,
+  стенда и переменных CI/CD.
+- [`LAB4_PROTOCOL.md`](LAB4_PROTOCOL.md) — протокол испытаний пайплайна на
+  10 сценариях (успешных и намеренно неуспешных).
+
+Служебные скрипты:
+
+| Скрипт | Назначение |
+|---|---|
+| `ci/wait-for-db.mjs` | ждёт готовности тестовой БД перед интеграционными тестами |
+| `ci/smoke.sh` | smoke-проверка стенда после deploy |
+| `ci/deploy-ssh.sh` | деплой на стенд по SSH |
+| `ci/deploy-local.sh` | деплой через `docker.sock` (режим `DEPLOY_MODE=socket`) |
+| `ci/cleanup.sh` | уборка временного окружения и тестовых данных |
+| `ci/break.sh` | внесение/откат намеренного сбоя для ЛР4 |
+| `ci/check-stand-ssh.sh` | проверка доступности стенда (запускается вручную) |
+
+Стенд описан в `stand/compose.stand.yaml`: в нём нет секции `build`, поэтому
+на стенде всегда запускается именно опубликованный образ.

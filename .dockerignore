@@ -5,3 +5,9 @@ node_modules
 Dockerfile
 .dockerignore
 compose.yaml
+compose.tests.yaml
+ci
+stand
+reports
+.gitlab-ci.yml
+smoke-report.txt
