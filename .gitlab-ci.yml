@@ -1,0 +1,201 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  CI/CD для лабораторных работ №3 и №4
+#
+#  Этапы:  check → test → build → deploy → smoke → cleanup
+#
+#  check   — проверка кода (tsc) и конфигурации (docker compose config)
+#  test    — unit- и integration-тесты из ЛР1 (+ новые тесты ЛР4) с отдельной БД
+#  build   — сборка и публикация образа в GitLab Container Registry
+#  deploy  — развёртывание опубликованного образа на стенде через Docker Compose
+#  smoke   — автоматическая проверка /health, /health/ready и сквозной CRUD (e2e)
+#  cleanup — удаление временного окружения и тестовых данных (данные стенда целы)
+#
+#  Публикация и деплой выполняются только из основной ветки.
+#  Секреты берутся из Settings → CI/CD → Variables (см. CI_GUIDE.md).
+# ─────────────────────────────────────────────────────────────────────────────
+
+stages:
+  - check
+  - test
+  - build
+  - deploy
+  - smoke
+  - cleanup
+
+variables:
+  npm_config_cache: "$CI_PROJECT_DIR/.npm"
+
+  # Образ, который собирается и публикуется
+  APP_IMAGE: "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
+  APP_IMAGE_LATEST: "$CI_REGISTRY_IMAGE:latest"
+
+  # Как деплоить на стенд: "ssh" (по SSH-ключу) или "socket" (через docker.sock)
+  DEPLOY_MODE: "ssh"
+
+  # Параметры стенда (переопределяются в Settings → CI/CD → Variables)
+  STAND_DIR: "onit-stand"
+  STAND_SSH_PORT: "2222"
+  STAND_APP_PORT: "8090"
+  SMOKE_BASE_URL: "http://host.docker.internal:8090"
+
+  # Отдельная тестовая БД для интеграционных тестов (не имеет отношения к БД стенда)
+  POSTGRES_DB: "onit_test"
+  POSTGRES_USER: "test_user"
+  POSTGRES_PASSWORD: "test_password"
+  TEST_DATABASE_URL: "postgresql://test_user:test_password@test-db:5432/onit_test"
+
+default:
+  image: node:24-alpine
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - .npm
+  before_script:
+    - npm ci --cache "$npm_config_cache" --prefer-offline
+
+# Пайплайн запускается и при push, и при merge request, но БЕЗ дублей:
+# если по ветке уже открыт merge request, отдельный branch-пайплайн не создаётся.
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS && $CI_PIPELINE_SOURCE == "push"'
+      when: never
+    - if: '$CI_COMMIT_BRANCH'
+
+# ── ЭТАП 1: ПРОВЕРКА КОДА И КОНФИГУРАЦИИ ──────────────────────────────────────
+
+typecheck:
+  stage: check
+  script:
+    - npm run typecheck
+
+config:check:
+  stage: check
+  image: docker:27
+  cache: []
+  before_script: []
+  script:
+    - docker version
+    - docker compose -f compose.yaml config --quiet
+    - docker compose -f compose.tests.yaml config --quiet
+    - APP_IMAGE="$APP_IMAGE" docker compose --env-file stand/.env.stand.example -f stand/compose.stand.yaml config --quiet
+    - echo "Все compose-файлы валидны"
+
+# ── ЭТАП 2: ТЕСТЫ ─────────────────────────────────────────────────────────────
+
+test:unit:
+  stage: test
+  script:
+    - npm run test:unit:ci
+  artifacts:
+    when: always
+    expire_in: 1 week
+    paths:
+      - reports/
+    reports:
+      junit: reports/unit.junit.xml
+
+test:integration:
+  stage: test
+  variables:
+    NODE_ENV: "test"
+  services:
+    - name: postgres:17-alpine
+      alias: test-db
+      variables:
+        POSTGRES_DB: onit_test
+        POSTGRES_USER: test_user
+        POSTGRES_PASSWORD: test_password
+  script:
+    - node ci/wait-for-db.mjs "$TEST_DATABASE_URL"
+    - npm run test:integration:ci
+  artifacts:
+    when: always
+    expire_in: 1 week
+    paths:
+      - reports/
+    reports:
+      junit: reports/integration.junit.xml
+
+# ── ЭТАП 3: СБОРКА И ПУБЛИКАЦИЯ ОБРАЗА (только основная ветка) ────────────────
+
+build:image:
+  stage: build
+  image: docker:27
+  cache: []
+  before_script: []
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+  script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+    - docker build --pull -t "$APP_IMAGE" -t "$APP_IMAGE_LATEST" .
+    - docker push "$APP_IMAGE"
+    - docker push "$APP_IMAGE_LATEST"
+    # Доказательство, что образ действительно лежит в реестре, а не только локально
+    - docker rmi "$APP_IMAGE" "$APP_IMAGE_LATEST"
+    - docker pull "$APP_IMAGE"
+
+# ── ЭТАП 4: DEPLOY НА СТЕНД (только основная ветка) ───────────────────────────
+
+deploy:stand:ssh:
+  stage: deploy
+  image: alpine:3.20
+  cache: []
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $DEPLOY_MODE == "ssh"'
+  before_script:
+    - apk add --no-cache openssh-client bash
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - echo "$STAND_SSH_KEY" | tr -d '\r' > ~/.ssh/stand_key
+    - chmod 600 ~/.ssh/stand_key
+    - ssh-keyscan -p "$STAND_SSH_PORT" "$STAND_SSH_HOST" 2>/dev/null >> ~/.ssh/known_hosts
+  script:
+    - bash ci/deploy-ssh.sh
+
+deploy:stand:socket:
+  stage: deploy
+  image: docker:27
+  cache: []
+  before_script: []
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $DEPLOY_MODE == "socket"'
+  script:
+    - docker login -u "$STAND_REGISTRY_USER" -p "$STAND_REGISTRY_PASSWORD" "$CI_REGISTRY"
+    - bash ci/deploy-local.sh
+
+# ── ЭТАП 5: SMOKE-ПРОВЕРКА И СКВОЗНОЙ CRUD НА ОПУБЛИКОВАННОМ ОБРАЗЕ ───────────
+
+smoke:
+  stage: smoke
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+  variables:
+    E2E_BASE_URL: "$SMOKE_BASE_URL"
+  script:
+    - apk add --no-cache bash curl jq
+    - bash ci/smoke.sh "$SMOKE_BASE_URL"
+    - npm run test:e2e:ci
+  artifacts:
+    when: always
+    expire_in: 1 week
+    paths:
+      - reports/
+      - smoke-report.txt
+    reports:
+      junit: reports/e2e.junit.xml
+
+# ── ЭТАП 6: УБОРКА (выполняется всегда, даже если пайплайн упал) ──────────────
+
+cleanup:
+  stage: cleanup
+  image: docker:27
+  cache: []
+  before_script: []
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: always
+  script:
+    - apk add --no-cache curl jq
+    - bash ci/cleanup.sh

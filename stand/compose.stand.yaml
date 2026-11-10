@@ -1,0 +1,67 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  Учебный стенд (ЛР3/ЛР4).
+#
+#  Главное отличие от compose.yaml: здесь НЕТ секции build.
+#  Стенд запускает ИМЕННО ТОТ образ, который опубликован в GitLab Container
+#  Registry, — никакой повторной сборки на стенде.
+#
+#  Данные БД лежат в именованном volume stand_postgres_data, поэтому
+#  docker compose down / up -d их не теряет.
+#
+#  Запуск вручную:
+#     cp .env.stand.example .env   # и заполнить значения
+#     docker compose --env-file .env pull
+#     docker compose --env-file .env up -d
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: onit-stand
+
+services:
+  backend:
+    image: ${APP_IMAGE:?APP_IMAGE не задан, например registry.gitlab.com/<логин>/onit:latest}
+    restart: unless-stopped
+    environment:
+      # Миграции применяются автоматически: CMD образа =
+      #   npx drizzle-kit migrate && npm start
+      DATABASE_URL: postgresql://${POSTGRES_USER:-onit}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD не задан}@db:5432/${POSTGRES_DB:-onit}
+      PORT: "8080"
+      HOST: "0.0.0.0"
+    ports:
+      - "${STAND_APP_PORT:-8090}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - stand-net
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-onit}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD не задан}
+      POSTGRES_DB: ${POSTGRES_DB:-onit}
+    # Порт БД наружу не публикуем: к базе ходит только backend внутри сети stand-net
+    volumes:
+      - stand_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - stand-net
+
+networks:
+  stand-net:
+    driver: bridge
+
+volumes:
+  stand_postgres_data:
